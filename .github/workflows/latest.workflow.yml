@@ -34,20 +34,9 @@ jobs:
         uses: arduino/setup-protoc@v3
       - name: Compile server
         run: bash ./build.sh
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: 上传
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          repo_token: "${{ secrets.HUB_TOKEN }}"
-          prerelease: true
-          automatic_release_tag: latest
-          files: |
-            dist/*
-      - name: Setup ko
-        uses: ko-build/setup-ko@v0.6
-        env:
-          KO_DOCKER_REPO: docker.io/vaalacat/frp-panel
-      - env:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          echo "${password}" | ko login docker.io --username ${username} --password-stdin
-          ko build ./cmd/frpp --bare
+          name: easytier-${{ env.NAME }}
+          path: dist/*
