@@ -111,6 +111,19 @@ build_binary() {
     local output="${output_name}-${platform}-${arch}${exe_ext}"
     CGO_ENABLED=0 GOOS="$platform" GOARCH="$goarch" \
     go build -o "dist/${output}" -ldflags "$BUILD_LD_FLAGS" $source_path
+
+    # 处理 MIPS 软浮点/硬浮点
+   if [[ "$arch" == "mips" || "$arch" == "mipsle" ]]; then
+       BUILD_LD_FLAGS="$BUILD_LD_FLAGS -ldflags '-s -w'"
+       export GOMIPS=softfloat  # 适用于不带 FPU 的 MIPS 设备
+   fi
+
+   if [[ "$arch" == "mips64" || "$arch" == "mips64le" ]]; then
+       export GOMIPS64=softfloat  # 适用于 64 位 MIPS
+   fi
+
+   CGO_ENABLED=0 GOOS="$platform" GOARCH="$arch" \
+   go build -o "dist/${output}" -ldflags "$BUILD_LD_FLAGS" $source_path
 }
 
 # Platforms array
@@ -124,7 +137,7 @@ fi
 # Architectures array
 ARCHS=()
 if [[ "$ARCH" == "all" ]]; then
-    ARCHS=("amd64" "arm64" "arm")
+    ARCHS=("amd64" "arm64" "arm" "mips" "mipsle" "mips64" "mips64le")
 else
     ARCHS=("$ARCH")
 fi
